@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DPR – MEW-5991 | L&T Construction</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBf8L7gGj5UXx6yZirp4htqiGFZvdQcCpM",
+      authDomain: "lnt5991.firebaseapp.com",
+      projectId: "lnt5991",
+      storageBucket: "lnt5991.firebasestorage.app",
+      messagingSenderId: "903502287289",
+      appId: "1:903502287289:web:4f3c6522b1732a3d9f2668"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Expose to global scope for React
+    window._fbDb = db;
+    window._fbDoc = doc;
+    window._fbSetDoc = setDoc;
+    window._fbGetDoc = getDoc;
+    window._fbCollection = collection;
+    window._fbGetDocs = getDocs;
+    window._fbReady = true;
+    window.dispatchEvent(new Event("fbready"));
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #f5f6fa; font-family: 'Segoe UI', system-ui, sans-serif; color: #1a1a2e; }
+    input, select, button { font-family: inherit; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f0f0f0; }
+    ::-webkit-scrollbar-thumb { background: #c0c8d8; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+// ── STATUS ───────────────────────────────────────────────────────────────────
+const IP = "ip", DONE = "done", PLAN = "plan";
+
+const ACTS = [
+  { key:"asm",    name:"Tower Assembly" },
+  { key:"boxp",   name:"Tower Box Preparation" },
+  { key:"torqb",  name:"Torque Painting Box" },
+  { key:"paint",  name:"Tower Box Painting" },
+  { key:"torqmid",name:"Torque Mid-Bot Cross Arm" },
+  { key:"half",   name:"Half Erection" },
+  { key:"full",   name:"Full Erection" },
+  { key:"tight",  name:"Full Tower Tightening" },
+  { key:"torqi",  name:"Full Tower Torque Inspection" },
+  { key:"megger", name:"Megger" },
+];
+
+const ALL_TOWERS = {
+  item1: ["1B/0","1B/1","1B/2","1A/0","1A/1","1A/2","1A/3","1A/4","2/0","2/1A","2/1","2/2","2/3","2/4","3/0","3/1","3/2","3/3","3/3A","3/4","3/5","3/6","3/7","3/8","3/9","3/10","3/11","4/0","4/1","4/2","4/3","4/4","4/5","5/0","5/1","6/0","6/1","6/2","7/0","7/1","7/2","7/3","8/0","8/1","8/2","8/3","8/4","8/5","8/6","8/7","8/8","8/9","8/10","8/11","8/12","8/13","8/14","8/15","8/16","8/17","8/18","8/19","8/20","8/21","8/22","8/23","8/24","8/25","8/26","8/27","8/28","8/29","8/30","8/31","8/32","8/31N","8/31A","8/32N","8/33N","8/33","8/34","8/35","8/36","8/37","8/38","8/39","8/40","8/41","8/42","8/43","8/44","9/0","10/0","10/1","10/2","10/3","10/4","10/5","10/6","10/7","10A/7","10/8","10/9","10/10","10/11","10/12","10/13","10/14","10/15","10/16","10/17","10/18","10/19","10/20","10/21","10/22","10/23","10/24","10/25","10/26","10/27","10/28","10/29","10/30","10/31","10/32","10/33","10/34","10/35","10/36","11/0","12/0"],
+  item2: ["GT","1/0","2/0","2/1","2/2","2/3","2A/0","2A/1","2A/2","2A/3","3/0","3/1","3/2","3/3","3/4","3/5","3/6","3/7","3/8","3/8A","3/8B","3/8C","3/8D","GC-1","3/9","3/10","3/11","3/12","3/13","4/0","4/1","4A/0","5/0","5/1","5/2","5/3","5/4","5/5","5/6","5/7","5/8","5/9","5/10","5/11","6/0","6/1","7/0","7/2","7/3","7/4","7/5","7/6","7/7","7/8","7/9","7/10","7/11","7/12","7/13","7/14","7/15","7/16","7/17","7/18","7/19","7/20","7/21","7/22","7/23","7/24","7/25","7/26","7/27","7/28","7/29","7/30","7/31","7/32","7/33","7/34","7/35","7/36","7/37","7/38","7/39","7/40","7/41","7/42","7/43","7/44","7/45","7/46","7/47","7/48","8/0","8/1","8/2","8/3","8/4","8/5","8/6","8/7","8/8","8/9","8/10","8/11","8A/0","8A/1","8A/2","8A/3","8A/4","8A/5","8A/6","8A/7","8A/8","8A/9","8A/10","8A/11","8A/12","8A/13","8A/14","8A/15","8A/16","8A/17","8A/18","8A/19","8A/20","8A/21","8A/22","8A/23","8A/24","8A/25","8A/26","8A/27","8A/28","8A/29","8A/30","8A/31","8A/32","8A/33","8A/34","8A/35","8A/36","8A/37","8A/38","9/0","9/1","9/2","10/0","10/1","10/2","10/3","11/0","11/1","11/2","11/3","11/4","11/5","11/6","11/7","11/8","11/9","11/10","11/11","11/12","11/13","12/0","12/1","12/2","12/3","12/4","12/5","12/6","12/7","13/0","14/0","14/1","14/2","14/3","14/4","14/5","15/0","15/1","16/0","17/0","17/1","17/2","17/3","17/4","17/5","17/6","17/7","17/8","17/9","17/10","17/11","17/12","17/13","17/14","17/15","17/16","17/17","17/18","17/19","18/0","18/1","18/2","18/3","18/4","18/5","18/6","18/7","18/8","18/9","18/10","18/11","18/12","18/13","18/14","18/15","18/16","18/17","18/18","19/0","19/1","19/2","20/0","20/1","21/0","22/0"],
+};
+
+// Background seed from Mar-18 — silent, shows in Excel only, no chips
+const BG_DONE = {
+  item1: {
+    asm:  ["1B/0","1A/1","1A/2","1A/3","3/1","3/2","3/3","3/5","3/6","3/7","3/8","3/9","3/10","3/11","4/0","4/1","4/2","4/4","4/5","5/0","5/1","7/0","7/1","7/2","7/3","8/0","8/1","8/2","8/3","8/4","8/5","8/6","8/7","8/8","8/9","8/10","8/11","8/12","8/13","8/14","8/15","8/16","8/17","8/18","8/19","8/20","8/21","8/22","8/25","8/26","8/27","8/28","8/29","8/30","8/33","8/34","8/35","8/36","8/37","8/38","8/39","8/40","8/41","8/42","8/43","8/44","9/0","10/0","10/1","10/2","10/3","10/4","10/5","10/6","10/7","10A/7","10/8","10/9","10/10","10/11","10/12","10/13","10/14","10/15","10/16","10/17","10/18","10/19","10/20","10/21","10/22","10/23","10/24","10/25","10/26","10/27","10/28","10/29","10/30","10/31","10/32","10/33","10/34","10/35","10/36","11/0","12/0"],
+    half: ["1B/0","1A/1","1A/2","1A/3","3/1","3/2","3/3","3/5","3/6","3/7","3/8","3/9","3/10","3/11","4/0","4/1","4/2","4/4","4/5","5/0","5/1","7/1","7/2","7/3","8/0","8/1","8/2","8/3","8/4","8/5","8/6","8/7","8/8","8/9","8/10","8/11","8/12","8/13","8/14","8/15","8/16","8/17","8/18","8/19","8/20","8/21","8/22","8/25","8/26","8/27","8/28","8/29","8/30","8/34","8/35","8/36","8/37","8/38","8/39","8/40","8/41","8/42","8/43","8/44","9/0","10/0","10/1","10/2","10/3","10/4","10/5","10/6","10/7","10A/7","10/8","10/9","10/10","10/11","10/12","10/13","10/14","10/15","10/16","10/17","10/18","10/19","10/20","10/21","10/22","10/23","10/24","10/25","10/26","10/27","10/28","10/29","10/30","10/31","10/32","10/33","10/34","10/35","10/36","11/0","12/0"],
+    full: ["1B/0","1A/1","1A/2","1A/3","3/1","3/2","3/3","3/5","3/6","3/7","3/8","3/9","3/10","3/11","4/0","4/1","4/2","4/4","4/5","5/0","5/1","7/1","7/2","7/3","8/0","8/1","8/2","8/3","8/4","8/5","8/6","8/7","8/8","8/9","8/10","8/11","8/12","8/13","8/14","8/15","8/16","8/17","8/18","8/19","8/20","8/21","8/22","8/25","8/26","8/27","8/28","8/29","8/30","8/34","8/35","8/36","8/37","8/38","8/39","8/40","8/41","8/42","8/43","8/44","9/0","10/0","10/1","10/2","10/3","10/4","10/5","10/6","10/7","10A/7","10/8","10/9","10/10","10/11","10/12","10/13","10/14","10/15","10/16","10/17","10/18","10/19","10/20","10/21","10/22","10/23","10/24","10/25","10/26","10/27","10/28","10/29","10/30","10/31","10/32","10/33","10/34","10/35","10/36","11/0"],
+    tight:["3/5","3/6","3/7","3/8","3/9","3/10","7/1","7/2","7/3","8/0","8/1","8/2","8/3","8/4","8/5","8/6","8/7","8/8","8/9","8/10","8/11","8/12","8/13","8/14","8/15","8/16","8/17","8/18","8/19","8/20","8/21","8/26","8/27","8/28","8/29","8/40","8/41","8/42","8/43","8/44","9/0","10/0","10/1","10/2","10/3","10/4","10/5","10/6","10/7","10A/7","10/8","10/9","10/10","10/11","10/12","10/13","10/14","10/15","10/16","10/17","10/18","10/19","10/20","10/21","10/22","10/23","10/24","10/25","10/26","10/27","10/28","10/29","10/30","10/31","10/32","10/33","10/34","10/35","10/36","11/0"],
+    paint:["1B/0","1A/1","1A/2","1A/3","3/1","3/2","3/3","3/5","3/6","3/7","3/8","3/9","3/10","3/11","4/5","5/0","5/1","7/1","7/2","7/3","8/0","8/1","8/2","8/3","8/4","8/5","8/6","8/7","8/8","8/9","8/10","8/11","8/12","8/13","8/14","8/15","8/16","8/17","8/18","8/19","8/20","8/21","8/22","8/25","8/26","8/27","8/28","8/29","8/30","8/34","8/35","8/36","8/37","8/38","8/41","8/42","8/43","8/44","9/0","10/0","10/1","10/2","10/3","10/4","10/5","10/6","10/7","10A/7","10/8","10/9","10/10","10/11","10/12","10/13","10/14","10/15","10/16","10/17","10/18","10/19","10/20","10/21","10/22","10/23","10/24","10/25","10/26","10/27","10/28","10/29","10/30","10/31","10/32","10/33","10/34","10/35","10/36","11/0"],
+    boxp:[],torqb:[],torqi:[],torqmid:[],megger:[],
+  },
+  item2: {
+    asm:  ["2/2","2/3","2A/0","2A/1","2A/2","2A/3","3/0","3/1","3/11","3/12","3/13","4/0","4/1","4A/0","5/1","5/2","5/3","5/4","5/5","5/6","5/7","5/8","5/9","5/10","5/11","7/2","7/3","7/4","7/5","7/6","7/7","7/8","7/9","7/10","7/11","7/12","7/13","7/14","7/15","7/16","7/17","7/18","7/19","7/20","7/21","7/22","7/23","7/24","7/25","7/26"],
+    half: ["2/2","2/3","2A/0","2A/1","2A/2","2A/3","3/0","3/1","3/11","3/12","3/13","4/0","4/1","4A/0","5/1","5/2","5/3","5/4","5/5","5/6","5/7","5/8","5/9","5/10","5/11","7/5","7/6","7/7","7/8","7/9","7/10","7/11","7/12","7/13","7/14","7/15","7/16","7/18"],
+    full: ["2/2","2/3","2A/0","2A/1","2A/2","2A/3","3/0","3/1","3/11","3/12","3/13","4/0","4/1","4A/0","5/1","5/2","5/3","5/4","5/5","5/6","5/7","5/8","5/9","5/10","5/11"],
+    tight:[],
+    paint:["2/2","2/3","2A/0","2A/1","2A/2","2A/3","3/0","3/1","3/11","3/12","3/13","4/0","4/1","4A/0","5/1","5/2","5/3","5/4","5/5","5/6","5/7","5/8","5/9","5/10","5/11","7/5","7/6","7/7","7/8","7/9","7/10","7/11","7/12","7/14","7/15","7/16","7/17"],
+    boxp:[],torqb:[],torqi:[],torqmid:[],megger:[],
+  },
+};
+
+const TOWER_TYPE = {
+  item1: {"1B/0":"D90+0","1B/1":"D10+9","1B/2":"D2+3","1A/0":"D90+3","1A/1":"D10+12","1A/2":"D10+9","1A/3":"D2+3","1A/4":"D2+0","2/0":"D60+0","2/1A":"D2+3","2/1":"D2+6","2/2":"D2+6","2/3":"D2+0","2/4":"D2+0","3/0":"D90+6","3/1":"D10+0","3/2":"D2+0","3/3":"D10+0","3/3A":"D10+6","3/4":"D2+6","3/5":"D2+6","3/6":"D2+6","3/7":"D2+6","3/8":"D2+6","3/9":"D2+6","3/10":"D2+6","3/11":"D10+6","4/0":"D90+0","4/1":"GU+0","4/2":"GU+0","4/3":"GU+0","4/4":"GU+0","4/5":"DT+0","5/0":"D60+3","5/1":"D10+15","6/0":"D90+33","6/1":"D90+33","6/2":"D10+33","7/0":"D60+9","7/1":"D10+6","7/2":"D10+9","7/3":"D2+0","8/0":"D10+6","8/1":"D10+6","8/2":"D10+0","8/3":"D2+0","8/4":"D10+3","8/5":"D10+24","8/6":"D10+24","8/7":"D10+3","8/8":"D2+0","8/9":"D2+0","8/10":"D2+0","8/11":"D2+0","8/12":"D2+0","8/13":"D10+0","8/14":"D2+0","8/15":"D2+0","8/16":"D2+0","8/17":"D2+0","8/18":"D2+0","8/19":"D2+0","8/20":"D10+6","8/21":"D10+6","8/22":"DT+0","8/23":"GT(SC)+0","8/24":"Scrapped","8/25":"DT+0","8/26":"D2+0","8/27":"D2+0","8/28":"D10+15","8/29":"D10+12","8/30":"D2+6","8/31":"Scrapped","8/32":"Scrapped","8/31N":"D10+12","8/31A":"D2SR+0","8/32N":"D2SR+0","8/33N":"D10+15","8/33":"Scrapped","8/34":"D10+6","8/35":"D10+6","8/36":"D2+0","8/37":"D2+0","8/38":"DT+0","8/39":"GT(SC)+0","8/40":"GT+0","8/41":"DT+0","8/42":"D10+6","8/43":"D10+12","8/44":"D2+0","9/0":"D30+0","10/0":"D30+0","10/1":"D2+0","10/2":"D2+3","10/3":"D2+0","10/4":"D10+3","10/5":"D10+6","10/6":"D10+21","10/7":"D10+21","10A/7":"D10+12","10/8":"D10+12","10/9":"D2+0","10/10":"D2+0","10/11":"D2+0","10/12":"D2+0","10/13":"D2+0","10/14":"D2+0","10/15":"D2+0","10/16":"D2+0","10/17":"D10+0","10/18":"D2+0","10/19":"D2+0","10/20":"D2+0","10/21":"D2+0","10/22":"D2+0","10/23":"D2+0","10/24":"D2+0","10/25":"D2+0","10/26":"D2+0","10/27":"D10+0","10/28":"D2+0","10/29":"D2+0","10/30":"D2+0","10/31":"D2+0","10/32":"D2+0","10/33":"D2+0","10/34":"D2+0","10/35":"D2+0","10/36":"D2+0","11/0":"DT+0","12/0":"GT+0"},
+  item2: {"GT":"GT+0","1/0":"DT+0","2/0":"D10+0","2/1":"D10+6","2/2":"D2+0","2/3":"D2+0","2A/0":"D2+0","2A/1":"D2+0","2A/2":"D2+0","2A/3":"D2+0","3/0":"D30+0","3/1":"D30+0","3/2":"DT+0","3/3":"GU+0","3/4":"GU+0","3/5":"GU+0","3/6":"GU+0","3/7":"DT+0","3/8":"Removed","3/8A":"D90+0","3/8B":"D10+3","3/8C":"D10+15","3/8D":"DT+0","GC-1":"GT+0","3/9":"DT+0","3/10":"D30+0","3/11":"D30+0","3/12":"D2+0","3/13":"D2+0","4/0":"D30+0","4/1":"D2+0","4A/0":"D30+0","5/0":"D90+0","5/1":"D2+0","5/2":"D2+0","5/3":"D2+0","5/4":"D2+0","5/5":"D2+0","5/6":"D10+0","5/7":"D2+0","5/8":"D2+0","5/9":"D2+0","5/10":"D2+0","5/11":"D2+3","6/0":"D60+12","6/1":"D10+21","7/0":"D10+24","7/2":"D10+6","7/3":"D10+6","7/4":"D2+0","7/5":"D2+0","7/6":"D2+0","7/7":"D2+0","7/8":"D2+0","7/9":"D2+0","7/10":"D10+0","7/11":"D2+0","7/12":"D2+0","7/13":"D2+0","7/14":"D2+0","7/15":"D2+0","7/16":"D2+0","7/17":"D2+3","7/18":"D10+21","7/19":"D10+21","7/20":"D10+24","7/21":"D10+24","7/22":"D2+6","7/23":"D2+0","7/24":"D2+0","7/25":"D2+3","7/26":"D2+0","7/27":"D2+0","7/28":"D10+0","7/29":"D2+0","7/30":"D2+0","7/31":"D10+3","7/32":"D10+6","7/33":"D2+6","7/34":"D2+6","7/35":"D2+6","7/36":"D2+6","7/37":"D2+6","7/38":"D10+6","7/39":"D2+6","7/40":"D2+6","7/41":"D10+6","7/42":"D10+12","7/43":"D2SR+0","7/44":"D2SR+0","7/45":"D10+12","7/46":"D2+6","7/47":"D2+6","7/48":"D10+12","8/0":"D2SR+0","8/1":"D2SR+0","8/2":"D10+15","8/3":"D2+6","8/4":"D2+3","8/5":"D10+9","8/6":"D2SR+0","8/7":"D2SR+0","8/8":"D10+9","8/9":"D2+6","8/10":"D2+6","8/11":"D60+0","8A/0":"D30+0","8A/1":"D90+0","8A/2":"D2+0","8A/3":"D2+0","8A/4":"D2+0","8A/5":"D2+0","8A/6":"D2+3","8A/7":"D2+0","8A/8":"D30+0","8A/9":"D2+3","8A/10":"D2+0","8A/11":"D2+3","8A/12":"D10+9","8A/13":"D2SR+0","8A/14":"D2SR+0","8A/15":"D10+9","8A/16":"D2+0","8A/17":"D2+0","8A/18":"D60+0","8A/19":"D2+0","8A/20":"D90+3","8A/21":"D10+15","8A/22":"D90+6","8A/23":"D10+0","8A/24":"D10+3","8A/25":"D10+6","8A/26":"D10+0","8A/27":"D10+0","8A/28":"D30+3","8A/29":"D2+0","8A/30":"D2+0","8A/31":"D2+0","8A/32":"D30+0","8A/33":"D10+6","8A/34":"D2+0","8A/35":"D30+0","8A/36":"D2+6","8A/37":"D60+18","8A/38":"D10+21","9/0":"D60+0","9/1":"D2+0","9/2":"D2+0","10/0":"D60+0","10/1":"D2+0","10/2":"D10+6","10/3":"D10+24","11/0":"D10+24","11/1":"D2+6","11/2":"D2+0","11/3":"D2+0","11/4":"D2+0","11/5":"D2+0","11/6":"D10+0","11/7":"D2+0","11/8":"D2+0","11/9":"D2+0","11/10":"D2+0","11/11":"D2+0","11/12":"D2+0","11/13":"D10+15","12/0":"D60+3","12/1":"D2+0","12/2":"D2+3","12/3":"D10+15","12/4":"D10+21","12/5":"D10+3","12/6":"D2+0","12/7":"D10+0","13/0":"D30+21","14/0":"D90+21","14/1":"D10+9","14/2":"D10+9","14/3":"D2+0","14/4":"D2+0","14/5":"D10+3","15/0":"D30+0","15/1":"D2+0","16/0":"D60+0","17/0":"D90+3","17/1":"D2+3","17/2":"D2+0","17/3":"D2+3","17/4":"D2+0","17/5":"D2+0","17/6":"D2+3","17/7":"D2+0","17/8":"D2+0","17/9":"D2+0","17/10":"D10+0","17/11":"D2+0","17/12":"D2+0","17/13":"D2+0","17/14":"D2+0","17/15":"D2+0","17/16":"D2+3","17/17":"D10+0","17/18":"D10+15","17/19":"D10+21","18/0":"D30+6","18/1":"D2+0","18/2":"D10+3","18/3":"D10+0","18/4":"D2+0","18/5":"D10+0","18/6":"D10+3","18/7":"D2+0","18/8":"D2+0","18/9":"D10+9","18/10":"D10+6","18/11":"D2+0","18/12":"D2+0","18/13":"D2+0","18/14":"D2+0","18/15":"D2+0","18/16":"D2+3","18/17":"D2+0","18/18":"D10+9","19/0":"DT+0","19/1":"GU+0","19/2":"GU+0","20/0":"D90+0","21/0":"D10+6","22/0":"D90+0","20/1":"Removed"}
+};
+
+const SK = "dpr_mew5991_v7"; // kept for migration fallback
+const todayStr = () => new Date().toISOString().split("T")[0];
+const AMBER="#e07b00", GREEN="#1a7a35", YELLOW="#b06000";
+const BG="#f5f6fa", CARD="#ffffff", BORDER="#e0e4ee";
+const TEXT="#1a1a2e", MUTED="#9098b0", NAVY="#1a3a5c";
+const mono = '"Courier New", monospace';
+
+function countDone(item, key, daily, cumulative) {
+  if (cumulative) return new Set([...(cumulative[item][key]?.done||[]), ...(daily[item][key]?.done||[])]).size;
+  return new Set([...(BG_DONE[item][key]||[]), ...(daily[item][key]?.done||[])]).size;
+}
+
+function Chip({ loc, status, onToggle, onRemove }) {
+  const s = {
+    [IP]:   {bg:"#fff8ec",fg:"#b06000",border:"#e09030",icon:"▶"},
+    [DONE]: {bg:"#eafaf0",fg:"#1a7a35", border:"#3fb950",icon:"✓"},
+    none:   {bg:"#f0f2f8",fg:"#9098b0",border:"#d0d8e8",icon:""},
+  }[status||"none"];
+  return (
+    <div style={{position:"relative",display:"inline-flex",margin:"3px"}}>
+      <button onClick={onToggle} style={{
+        background:s.bg, color:s.fg, border:`1.5px solid ${s.border}`,
+        borderRadius:7, padding:"6px 10px", cursor:"pointer",
+        fontFamily:mono, fontSize:12, fontWeight:700,
+        display:"flex", alignItems:"center", gap:5,
+        boxShadow:status?`0 2px 8px ${s.border}66`:"none",
+        transition:"all 0.12s", userSelect:"none",
+      }}>
+        {s.icon && <span style={{fontSize:10}}>{s.icon}</span>}
+        {loc}
+      </button>
+      <button onClick={onRemove} style={{
+        position:"absolute", top:-6, right:-6,
+        width:16, height:16, borderRadius:"50%",
+        background:"#e8eaf0", border:"1px solid #c0c8d8",
+        color:"#777", fontSize:9, cursor:"pointer",
+        display:"flex", alignItems:"center", justifyContent:"center",
+        padding:0, lineHeight:1,
+      }}>✕</button>
+    </div>
+  );
+}
+
+function App() {
+  const emptyDaily = () => {
+    const d = {item1:{}, item2:{}};
+    ["item1","item2"].forEach(it => ACTS.forEach(a => { d[it][a.key] = {done:[],ip:[],plan:[]}; }));
+    return d;
+  };
+
+  // ── Firebase master tower helpers ─────────────────────────────
+  async function fbLoadMaster() {
+    if (!window._fbReady) return null;
+    try {
+      const snap = await window._fbGetDoc(window._fbDoc(window._fbDb, "dpr_master", "towers"));
+      if (snap.exists()) return JSON.parse(snap.data().data);
+      return null;
+    } catch(e) { console.warn("FB master load failed", e); return null; }
+  }
+
+  async function fbSaveMaster(data) {
+    if (!window._fbReady) return;
+    try {
+      await window._fbSetDoc(window._fbDoc(window._fbDb, "dpr_master", "towers"), { data: JSON.stringify(data) });
+    } catch(e) { console.warn("FB master save failed", e); }
+  }
+
+  // Get effective tower list — Firebase master overrides hardcoded
+  function getTowers(item) {
+    if (masterTowers && masterTowers[item]) return masterTowers[item].map(t=>t.loc);
+    return ALL_TOWERS[item];
+  }
+
+  function getTowerType(item, loc) {
+    if (masterTowers && masterTowers[item]) {
+      const t = masterTowers[item].find(t=>t.loc===loc);
+      if (t) return t.type;
+    }
+    return (TOWER_TYPE[item]||{})[loc] || "–";
+  }
+
+  // ── Firebase helpers ──────────────────────────────────────────
+  async function fbSaveDaily(dateKey, data) {
+    if (!window._fbReady) return;
+    try {
+      await window._fbSetDoc(window._fbDoc(window._fbDb, "dpr_daily", dateKey), { data: JSON.stringify(data) });
+    } catch(e) { console.warn("FB daily save failed", e); }
+  }
+
+  async function fbLoadDaily(dateKey) {
+    if (!window._fbReady) return null;
+    try {
+      const snap = await window._fbGetDoc(window._fbDoc(window._fbDb, "dpr_daily", dateKey));
+      if (snap.exists()) return JSON.parse(snap.data().data);
+      return null;
+    } catch(e) { console.warn("FB daily load failed", e); return null; }
+  }
+
+  async function fbSaveCumulative(data) {
+    if (!window._fbReady) return;
+    try {
+      await window._fbSetDoc(window._fbDoc(window._fbDb, "dpr_cumulative", "totals"), { data: JSON.stringify(data) });
+      setFbStatus("synced");
+    } catch(e) { console.warn("FB cumulative save failed", e); setFbStatus("error"); }
+  }
+
+  async function fbLoadCumulative() {
+    if (!window._fbReady) return null;
+    try {
+      const snap = await window._fbGetDoc(window._fbDoc(window._fbDb, "dpr_cumulative", "totals"));
+      setFbStatus("synced");
+      if (snap.exists()) return JSON.parse(snap.data().data);
+      return null;
+    } catch(e) { console.warn("FB cumulative load failed", e); setFbStatus("error"); return null; }
+  }
+
+  // Rebuild cumulative by scanning ALL Firebase daily records
+  async function fbRebuildCumulative() {
+    if (!window._fbReady) return null;
+    try {
+      const snap = await window._fbGetDocs(window._fbCollection(window._fbDb, "dpr_daily"));
+      const cum = {item1:{}, item2:{}};
+      ["item1","item2"].forEach(item => {
+        ACTS.forEach(act => {
+          cum[item][act.key] = { done:[...(BG_DONE[item][act.key]||[])], ip:[], plan:[] };
+        });
+      });
+      snap.forEach(docSnap => {
+        try {
+          const dayData = JSON.parse(docSnap.data().data);
+          ["item1","item2"].forEach(item => {
+            ACTS.forEach(act => {
+              const td = dayData[item]?.[act.key];
+              if (!td) return;
+              const doneSet = new Set(cum[item][act.key].done);
+              const ipSet   = new Set(cum[item][act.key].ip);
+              (td.done||[]).forEach(t => { doneSet.add(t); ipSet.delete(t); });
+              (td.ip||[]).forEach(t  => { if (!doneSet.has(t)) ipSet.add(t); });
+              cum[item][act.key].done = [...doneSet];
+              cum[item][act.key].ip   = [...ipSet];
+            });
+          });
+        } catch(e) {}
+      });
+      setFbStatus("synced");
+      return cum;
+    } catch(e) { console.warn("FB rebuild failed", e); setFbStatus("error"); return null; }
+  }
+
+  // Merge today's daily data into cumulative
+  function mergeToCumulative(cumulative, todayDaily) {
+    const next = JSON.parse(JSON.stringify(cumulative)); // deep copy
+    ["item1","item2"].forEach(item => {
+      ACTS.forEach(act => {
+        if (!next[item]) next[item] = {};
+        if (!next[item][act.key]) next[item][act.key] = {done:[],ip:[],plan:[]};
+        if (!todayDaily[item]) todayDaily[item] = {};
+        if (!todayDaily[item][act.key]) todayDaily[item][act.key] = {done:[],ip:[],plan:[]};
+        const td = todayDaily[item][act.key];
+        const cum = next[item][act.key];
+        // Add done towers to cumulative done (no duplicates)
+        const cumDoneSet = new Set(cum.done);
+        td.done.forEach(t => cumDoneSet.add(t));
+        // For ip: add to cumulative ip, but remove from ip if now in done
+        const cumIpSet = new Set(cum.ip);
+        td.done.forEach(t => cumIpSet.delete(t)); // moved to done
+        td.ip.forEach(t => { if (!cumDoneSet.has(t)) cumIpSet.add(t); });
+        cum.done = [...cumDoneSet];
+        cum.ip = [...cumIpSet];
+      });
+    });
+    return next;
+  }
+
+  const [daily, setDaily]   = useState(null);   // today's chips only
+  const [cumulative, setCumulative] = useState(null); // running total
+  const [tab, setTab]       = useState("item1");
+  const [mainTab, setMainTab] = useState("dpr");
+  const [fbStatus, setFbStatus] = useState("connecting");
+  const [adminUnlocked, setAdminUnlocked] = useState(false);
+  const [adminPass, setAdminPass] = useState("");
+  const [adminPassErr, setAdminPassErr] = useState(false);
+  const [masterTowers, setMasterTowers] = useState(null);
+  // Admin form state
+  const [adminItem, setAdminItem] = useState("item1");
+  const [adminLoc, setAdminLoc] = useState("");
+  const [adminType, setAdminType] = useState("");
+  const [adminAfter, setAdminAfter] = useState("");
+  const [adminEditLoc, setAdminEditLoc] = useState("");
+  const [adminEditType, setAdminEditType] = useState("");
+  const [adminMsg, setAdminMsg] = useState("");
+  const [date, setDate]     = useState(todayStr());
+  const [prevPlan, setPrevPlan] = useState(null); // yesterday's plan
+  const [weather, setWeather] = useState("Sunny");
+  const [temp, setTemp]     = useState("32°C / 46°C");
+  const [inputs, setInputs] = useState({});
+  const [errors, setErrors] = useState({});
+  const [toast, setToast]   = useState("");
+  const [remarks, setRemarks] = useState({});
+  const [remarkOpen, setRemarkOpen] = useState(null);
+  const [remarkDraft, setRemarkDraft] = useState("");
+  const refs = useRef({});
+
+  useEffect(() => {
+    setDaily(null);
+    setCumulative(null);
+    const load = async () => {
+      // Load master tower list
+      const master = await fbLoadMaster();
+      if (master) setMasterTowers(master);
+
+      // Rebuild cumulative from ALL daily records in Firebase
+      let cum = await fbRebuildCumulative();
+      if (!cum) {
+        cum = {item1:{}, item2:{}};
+        ["item1","item2"].forEach(item => {
+          ACTS.forEach(act => {
+            cum[item][act.key] = { done:[...(BG_DONE[item][act.key]||[])], ip:[], plan:[] };
+          });
+        });
+      }
+      // Safety fill for any new activity keys
+      ["item1","item2"].forEach(item => {
+        ACTS.forEach(act => {
+          if (!cum[item]) cum[item] = {};
+          if (!cum[item][act.key]) cum[item][act.key] = {done:[],ip:[],plan:[]};
+          if (!cum[item][act.key].plan) cum[item][act.key].plan = [];
+        });
+      });
+      setCumulative(cum);
+
+      // Load today's daily entries (chips)
+      let tod = await fbLoadDaily(date);
+      if (!tod) {
+        try {
+          const raw = localStorage.getItem(SK + "_" + date);
+          tod = raw ? JSON.parse(raw) : emptyDaily();
+        } catch { tod = emptyDaily(); }
+      }
+      ["item1","item2"].forEach(item => {
+        ACTS.forEach(act => {
+          if (!tod[item]) tod[item] = {};
+          if (!tod[item][act.key]) tod[item][act.key] = {done:[],ip:[],plan:[]};
+          if (!tod[item][act.key].plan) tod[item][act.key].plan = [];
+        });
+      });
+      setFbStatus("synced");
+      setDaily(tod);
+      try {
+        const remSnap = await window._fbGetDoc(window._fbDoc(window._fbDb,"dpr_remarks",date));
+        if (remSnap.exists()) setRemarks(JSON.parse(remSnap.data().data));
+        else { const rawR = localStorage.getItem(SK+"_rem_"+date); setRemarks(rawR?JSON.parse(rawR):{}); }
+      } catch { setRemarks({}); }
+
+      // Load yesterday's plan for DPR suggestions
+      const yesterday = new Date(date);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yStr = yesterday.toISOString().split("T")[0];
+      try {
+        const ySnap = await fbLoadDaily(yStr);
+        if (ySnap) {
+          const pp = {item1:{}, item2:{}};
+          ["item1","item2"].forEach(item => {
+            ACTS.forEach(act => {
+              pp[item][act.key] = ySnap[item]?.[act.key]?.plan || [];
+            });
+          });
+          setPrevPlan(pp);
+        } else {
+          setPrevPlan(null);
+        }
+      } catch(e) { setPrevPlan(null); }
+    };
+
+    if (window._fbReady) {
+      load();
+    } else {
+      window.addEventListener("fbready", load, { once: true });
+      setTimeout(() => {
+        if (!window._fbReady) {
+          const cum = emptyDaily();
+          ["item1","item2"].forEach(item => {
+            ACTS.forEach(act => { cum[item][act.key].done = [...(BG_DONE[item][act.key]||[])]; });
+          });
+          setCumulative(cum);
+          try {
+            const raw = localStorage.getItem(SK + "_" + date);
+            setDaily(raw ? JSON.parse(raw) : emptyDaily());
+          } catch { setDaily(emptyDaily()); }
+        }
+      }, 3000);
+    }
+  }, [date]);
+
+  function persistRemarks(next) {
+    setRemarks(next);
+    try { localStorage.setItem(SK+"_rem_"+date, JSON.stringify(next)); } catch {}
+    if (window._fbReady) {
+      window._fbSetDoc(window._fbDoc(window._fbDb,"dpr_remarks",date),{data:JSON.stringify(next)}).catch(()=>{});
+    }
+  }
+
+  function persist(nextDaily) {
+    setDaily(nextDaily);
+    // Save today's chips locally + Firebase
+    try { localStorage.setItem(SK + "_" + date, JSON.stringify(nextDaily)); } catch {}
+    fbSaveDaily(date, nextDaily);
+    // Stale-closure fix: use functional setState so we always get latest cumulative
+    setCumulative(prevCum => {
+      const base = prevCum || (() => {
+        const c = {item1:{}, item2:{}};
+        ["item1","item2"].forEach(item => {
+          ACTS.forEach(act => {
+            c[item][act.key] = { done:[...(BG_DONE[item][act.key]||[])], ip:[], plan:[] };
+          });
+        });
+        return c;
+      })();
+      const nextCum = mergeToCumulative(base, nextDaily);
+      fbSaveCumulative(nextCum);
+      return nextCum;
+    });
+  }
+
+  function flash(msg) { setToast(msg); setTimeout(()=>setToast(""), 2200); }
+
+  function chips(item, key, mode="dpr") {
+    const d = daily[item][key];
+    if (mode==="plan") {
+      return [...d.plan].sort((a,b)=>getTowers(item).indexOf(a)-getTowers(item).indexOf(b));
+    }
+    const all = [...new Set([...d.done,...d.ip])];
+    return all.sort((a,b) => getTowers(item).indexOf(a) - getTowers(item).indexOf(b));
+  }
+
+  function chipStatus(item, key, loc, mode="dpr") {
+    if (mode==="plan") return daily[item][key].plan.includes(loc) ? PLAN : null;
+    if (daily[item][key].done.includes(loc)) return DONE;
+    if (daily[item][key].ip.includes(loc))   return IP;
+    return null;
+  }
+
+  function toggle(item, key, loc, mode="dpr") {
+    const d = daily[item][key];
+    if (mode==="plan") {
+      const np = d.plan.includes(loc) ? d.plan.filter(x=>x!==loc) : [...d.plan, loc];
+      persist({...daily,[item]:{...daily[item],[key]:{...d,plan:np}}});
+      return;
+    }
+    let nd = [...d.done], ni = [...d.ip];
+    if (chipStatus(item,key,loc)===DONE)    { nd=nd.filter(x=>x!==loc); ni.push(loc); }
+    else if (chipStatus(item,key,loc)===IP) { ni=ni.filter(x=>x!==loc); nd.push(loc); }
+    else { nd.push(loc); }
+    persist({...daily,[item]:{...daily[item],[key]:{...d,done:nd,ip:ni}}});
+  }
+
+  function remove(item, key, loc, mode="dpr") {
+    const d = daily[item][key];
+    if (mode==="plan") {
+      persist({...daily,[item]:{...daily[item],[key]:{...d,plan:d.plan.filter(x=>x!==loc)}}});
+      return;
+    }
+    persist({...daily,[item]:{...daily[item],[key]:{...d,done:d.done.filter(x=>x!==loc),ip:d.ip.filter(x=>x!==loc)}}});
+  }
+
+  function addChips(item, key, startAs, mode="dpr", directLoc=null) {
+    // directLoc: single tower from suggestion chip tap (bypasses input field)
+    const raw = directLoc ? directLoc : (inputs[`${item}_${key}`]||"").trim();
+    if (!raw) return;
+    const tokens = raw.split(/[,\s;]+/).map(s=>s.trim()).filter(Boolean);
+    const vs = new Set(getTowers(item));
+    const valid   = tokens.filter(t=>vs.has(t));
+    const invalid = tokens.filter(t=>!vs.has(t));
+    if (invalid.length) {
+      setErrors(e=>({...e,[`${item}_${key}`]:`Not found: ${invalid.join(", ")}`}));
+      setTimeout(()=>setErrors(e=>{const n={...e};delete n[`${item}_${key}`];return n;}),3500);
+    }
+    if (!valid.length) return;
+    const d = daily[item][key];
+    if (mode==="plan") {
+      const existing = new Set(d.plan);
+      const toAdd = valid.filter(t=>!existing.has(t));
+      if (!toAdd.length) { flash("All entered towers already in plan"); return; }
+      persist({...daily,[item]:{...daily[item],[key]:{...d,plan:[...d.plan,...toAdd]}}});
+      setInputs(q=>({...q,[`${item}_${key}`]:""}));
+      flash(`${toAdd.length} tower${toAdd.length>1?"s":""} added to plan`);
+      refs.current[`${item}_${key}`]?.focus();
+      return;
+    }
+    const existing = new Set([...d.done,...d.ip]);
+    const toAdd = valid.filter(t=>!existing.has(t));
+    if (!toAdd.length) { flash("All entered towers already added"); return; }
+    const updated = {
+      ...d,
+      done: startAs===DONE ? [...d.done,...toAdd] : [...d.done],
+      ip:   startAs===IP   ? [...d.ip,...toAdd]   : [...d.ip],
+    };
+    persist({...daily,[item]:{...daily[item],[key]:updated}});
+    setInputs(q=>({...q,[`${item}_${key}`]:""}));
+    flash(`${toAdd.length} tower${toAdd.length>1?"s":""} added — tap chip to change status`);
+    refs.current[`${item}_${key}`]?.focus();
+  }
+
+  function downloadExcel() {
+    if (!daily) return;
+    const wb = XLSX.utils.book_new();
+    ["item1","item2"].forEach(item => {
+      const towers = getTowers(item);
+      const label = item==="item1"
+        ? "Item 1 – Khiran P/Stn to Wafra 'Z' SS"
+        : "Item 2 – Wafra 'Z' S/Stn to Sulaibiya 'Z' S/Stn";
+      const dataRows = ACTS.map((act,i) => {
+        const cumD = new Set([...(cumulative?cumulative[item][act.key]?.done||[]:BG_DONE[item][act.key]||[]), ...(daily[item][act.key].done||[])]);
+        const cumI = new Set([...(cumulative?cumulative[item][act.key]?.ip||[]:[] ), ...(daily[item][act.key].ip||[])].filter(t=>!cumD.has(t)));
+        return [i+1, act.name, ...towers.map(t=>
+          cumD.has(t)?"✓": cumI.has(t)?"▶":""
+        )];
+      });
+      const totRow=["","TOTAL DONE →",...towers.map((_,ci)=>dataRows.reduce((s,r)=>s+(r[ci+2]==="✓"?1:0),0))];
+      const ipRow =["","IN PROGRESS →",...towers.map((_,ci)=>dataRows.reduce((s,r)=>s+(r[ci+2]==="▶"?1:0),0))];
+      const aoa = [[`MEW-5991 | ${label} | As on ${date}`],["#","Activity",...towers],...dataRows,totRow,ipRow];
+      const ws = XLSX.utils.aoa_to_sheet(aoa);
+      ws["!cols"]=[{wch:4},{wch:30},...towers.map(()=>({wch:7}))];
+      XLSX.utils.book_append_sheet(wb, ws, item==="item1"?"Item 1":"Item 2");
+    });
+    const out = XLSX.write(wb,{bookType:"xlsx",type:"array"});
+    const url = URL.createObjectURL(new Blob([out],{type:"application/octet-stream"}));
+    Object.assign(document.createElement("a"),{href:url,download:`DPR-MEW5991-${date}.xlsx`}).click();
+    URL.revokeObjectURL(url);
+    flash("📥 Excel downloaded!");
+  }
+
+  function downloadPNG() {
+    if (!daily) return;
+
+    const allRows = [];
+    let siNo = 1;
+    ["item1","item2"].forEach(item => {
+      const towers = getTowers(item), total = towers.length;
+      const itemLabel = item === "item1" ? "Item 1" : "Item 2";
+      ACTS.forEach(act => {
+        // PNG chips = today's daily entries only
+        const dyD = new Set(daily[item][act.key].done);
+        const dyI = new Set(daily[item][act.key].ip);
+        const doneArr = [...dyD];
+        const ipArr = [...dyI].filter(t => !dyD.has(t));
+
+        const planArr = [...(daily[item][act.key].plan||[])];
+        const typeMap = TOWER_TYPE[item] || {};
+        const doneTypes = [...new Set(doneArr.map(t=>typeMap[t]).filter(Boolean))];
+        const ipTypes   = [...new Set(ipArr.map(t=>typeMap[t]).filter(Boolean))];
+        const planTypes = [...new Set(planArr.map(t=>typeMap[t]).filter(Boolean))];
+        if (!doneArr.length && !ipArr.length && !planArr.length) return;
+        const remark = (remarks&&remarks[`${item}_${act.key}`])||"";
+        allRows.push({ sn:siNo++, item, itemLabel, act, total,
+          done:doneArr.length, ip:ipArr.length, doneArr, ipArr, planArr, doneTypes, ipTypes, planTypes, remark });
+      });
+    });
+
+    const W = 900;
+    const PAD = 30;
+    const ACCENT  = "#4a5d8a";
+    const ACCENT2 = "#d6d9e4";
+    const HDR_BG  = "#c8ccd8";
+    const WHITE   = "#ffffff";
+    const ROW_ALT = "#f0f2f7";
+    const BORDER  = "#aab0c8";
+    const BLACK   = "#111111";
+    const GREEN   = "#1a7a35";
+    const YELLOW  = "#9a6a00";
+    const SANS    = "Arial, sans-serif";
+    const MONO2   = '"Courier New", monospace';
+
+    // Cols: NO | ACTIVITY | ITEM | TOWER TYPE (done green / ip yellow) | DONE towers | IN PROG towers
+    const C_SN   = 44;
+    const C_ACT  = 155;
+    const C_ITEM = 60;
+    const C_TYPE = 100;
+    const C_REM  = 115;
+    const CELL_W = W - PAD * 2;
+    const C_REMAIN = CELL_W - C_SN - C_ACT - C_ITEM - C_TYPE - C_REM;
+    const C_DONE = Math.floor(C_REMAIN / 3);
+    const C_IP   = Math.floor(C_REMAIN / 3);
+    const C_PLAN = C_REMAIN - C_DONE - C_IP;
+
+    const xSN   = PAD;
+    const xACT  = xSN  + C_SN;
+    const xITEM = xACT + C_ACT;
+    const xTYPE = xITEM + C_ITEM;
+    const xDONE = xTYPE + C_TYPE;
+    const xIP   = xDONE + C_DONE;
+    const xPLAN = xIP   + C_IP;
+    const xREM  = xPLAN + C_PLAN;
+
+    const LINE_H = 22;
+    const CHARS_HALF = Math.floor(C_DONE / 7.8);
+    const CHARS_PLAN = Math.floor(C_PLAN / 7.8);
+
+    function buildLines(arr, prefix) {
+      if (!arr.length) return [];
+      const lines = []; let cur = prefix + " ";
+      arr.forEach((t,i) => {
+        const part = t + (i < arr.length-1 ? ", " : "");
+        if ((cur+part).length > CHARS_HALF && cur.trim().length > prefix.length) {
+          lines.push(cur.trimEnd()); cur = "   " + part;
+        } else cur += part;
+      });
+      if (cur.trim()) lines.push(cur.trimEnd());
+      return lines;
+    }
+
+    function buildPlanLines(arr) {
+      if (!arr.length) return [];
+      const lines = []; let cur = "📅 ";
+      arr.forEach((t,i) => {
+        const part = t + (i < arr.length-1 ? ", " : "");
+        if ((cur+part).length > CHARS_PLAN && cur.trim().length > 2) {
+          lines.push(cur.trimEnd()); cur = "   " + part;
+        } else cur += part;
+      });
+      if (cur.trim()) lines.push(cur.trimEnd());
+      return lines;
+    }
+
+    const HEADER_H    = 160;
+    const TABLE_HDR_H = 52;
+    const FOOTER_H    = 52;
+    const BAND_H      = 50;
+
+    const rowMeta = allRows.map(row => {
+      const dLines = buildLines(row.doneArr, "✓");
+      const iLines = buildLines(row.ipArr, "▶");
+      const pLines = buildPlanLines(row.planArr||[]);
+      const towerLines = Math.max(dLines.length, iLines.length, pLines.length);
+      const dtLines = buildLines(row.doneTypes, "");
+      const itLines = buildLines(row.ipTypes, "");
+      const typeLines = Math.max(dtLines.length, itLines.length, 1);
+      const towerBlockH = towerLines ? towerLines * LINE_H + 14 : 0;
+      return { ...row, dLines, iLines, pLines, dtLines, itLines, typeLines, h: BAND_H + towerBlockH + 12 };
+    });
+
+    if (!rowMeta.length) {
+      const cv = document.createElement("canvas");
+      cv.width = W; cv.height = 400; const g = cv.getContext("2d");
+      g.fillStyle = WHITE; g.fillRect(0,0,W,400);
+      g.fillStyle = ACCENT; g.fillRect(0,0,W,140);
+      g.fillStyle = WHITE; g.font=`bold 32px ${SANS}`; g.textAlign="center";
+      g.fillText("DAILY PROGRESS REPORT", W/2, 80);
+      g.fillStyle="#555"; g.font=`bold 16px ${SANS}`; g.textAlign="center";
+      g.fillText("No daily entries recorded.", W/2, 240);
+      cv.toBlob(b=>{const url=URL.createObjectURL(b);Object.assign(document.createElement("a"),{href:url,download:`DPR-${date}.png`}).click();URL.revokeObjectURL(url);});
+      flash("🖼️ PNG downloaded!"); return;
+    }
+
+    const totalH = HEADER_H + TABLE_HDR_H + rowMeta.reduce((s,r)=>s+r.h+1,0) + FOOTER_H + 10;
+    const cv = document.createElement("canvas");
+    cv.width = W; cv.height = totalH;
+    const g = cv.getContext("2d");
+
+    // BG + triangles
+    g.fillStyle = ACCENT2; g.fillRect(0,0,W,totalH);
+    g.fillStyle = ACCENT;
+    g.beginPath(); g.moveTo(0,0); g.lineTo(360,0); g.lineTo(0,220); g.closePath(); g.fill();
+    g.fillStyle = ACCENT;
+    g.beginPath(); g.moveTo(W,totalH); g.lineTo(W-300,totalH); g.lineTo(W,totalH-180); g.closePath(); g.fill();
+
+    // Header
+    g.fillStyle = WHITE; g.font=`bold 36px ${SANS}`; g.textAlign="left";
+    g.fillText("L&T CONSTRUCTION", PAD, 58);
+    g.font=`bold 14px ${SANS}`;
+    g.fillText(`${date}   ${weather}   ${temp}`, PAD, 84);
+    g.fillText("400kV OHL Kuwait  ·  MEW/C/5991", PAD, 104);
+    g.fillStyle = BLACK; g.font=`bold 32px ${SANS}`; g.textAlign="right";
+    g.fillText("DAILY PROGRESS REPORT", W-PAD, 58);
+    g.fillStyle="#444"; g.font=`bold 13px ${SANS}`; g.textAlign="right";
+    g.fillText("Today's entries only", W-PAD, 82);
+
+    // Table header
+    const tY = HEADER_H;
+    g.fillStyle = HDR_BG; g.fillRect(PAD, tY, CELL_W, TABLE_HDR_H);
+    g.strokeStyle = ACCENT; g.lineWidth = 2.5;
+    g.beginPath(); g.moveTo(PAD, tY+TABLE_HDR_H); g.lineTo(PAD+CELL_W, tY+TABLE_HDR_H); g.stroke();
+
+    const PLAN_CLR = "#2a6ab5";
+    const REM_CLR  = "#5a3a8a";
+    const hdrCols = [
+      { label:"NO",            x:xSN,   w:C_SN,   color:BLACK },
+      { label:"ACTIVITY",      x:xACT,  w:C_ACT,  color:BLACK, left:true },
+      { label:"ITEM",          x:xITEM, w:C_ITEM,  color:BLACK },
+      { label:"TOWER TYPE",    x:xTYPE, w:C_TYPE,  color:BLACK },
+      { label:"✓  COMPLETED",  x:xDONE, w:C_DONE,  color:GREEN },
+      { label:"▶  IN PROGRESS",x:xIP,   w:C_IP,    color:YELLOW },
+      { label:"📅  PLAN",       x:xPLAN, w:C_PLAN,  color:PLAN_CLR },
+      { label:"💬  REMARKS",    x:xREM,  w:C_REM,   color:REM_CLR, left:true },
+    ];
+    hdrCols.forEach((col,ci) => {
+      if (ci > 0) {
+        g.strokeStyle = BORDER; g.lineWidth = 0.8;
+        g.beginPath(); g.moveTo(col.x, tY); g.lineTo(col.x, tY+TABLE_HDR_H); g.stroke();
+      }
+      g.fillStyle = col.color;
+      g.font = `bold 13px ${SANS}`;
+      g.textAlign = col.left ? "left" : "center";
+      g.fillText(col.label, col.left ? col.x+8 : col.x+col.w/2, tY+TABLE_HDR_H/2+5);
+    });
+
+    // Data rows
+    let ry = tY + TABLE_HDR_H;
+    rowMeta.forEach((row, ri) => {
+      const rh = row.h;
+      g.fillStyle = ri%2===0 ? WHITE : ROW_ALT;
+      g.fillRect(PAD, ry, CELL_W, rh);
+
+      g.strokeStyle = BORDER; g.lineWidth = 0.5;
+      g.beginPath(); g.moveTo(PAD, ry+rh); g.lineTo(PAD+CELL_W, ry+rh); g.stroke();
+
+      [xACT,xITEM,xTYPE,xDONE,xIP,xPLAN,xREM].forEach(x => {
+        g.strokeStyle = BORDER; g.lineWidth = 0.5;
+        g.beginPath(); g.moveTo(x, ry); g.lineTo(x, ry+rh); g.stroke();
+      });
+
+      // Col tints
+      g.fillStyle = "rgba(26,122,53,0.06)";  g.fillRect(xDONE, ry, C_DONE, rh);
+      g.fillStyle = "rgba(154,106,0,0.06)";  g.fillRect(xIP,   ry, C_IP,   rh);
+      g.fillStyle = "rgba(42,106,181,0.06)"; g.fillRect(xPLAN, ry, C_PLAN, rh);
+      g.fillStyle = "rgba(90,58,138,0.04)";  g.fillRect(xREM,  ry, C_REM,  rh);
+
+      const midY = ry + BAND_H/2 + 6;
+
+      // No
+      g.fillStyle="#888"; g.font=`bold 14px ${SANS}`; g.textAlign="center";
+      g.fillText(String(row.sn), xSN+C_SN/2, midY);
+
+      // Activity
+      g.fillStyle=BLACK; g.font=`bold 16px ${SANS}`; g.textAlign="left";
+      g.fillText(row.act.name, xACT+8, midY);
+
+      // Item
+      const ic = row.item==="item1" ? "#2a4a9a" : "#9a4a2a";
+      g.fillStyle=ic; g.font=`bold 14px ${SANS}`; g.textAlign="center";
+      g.fillText(row.itemLabel, xITEM+C_ITEM/2, midY);
+
+      // Tower Type — green for done types, yellow for ip types, stacked
+      {
+        const typeColMid = xTYPE + C_TYPE/2;
+        const allDT = row.doneTypes, allIT = row.ipTypes;
+        // combine: done types green, ip-only types yellow
+        const ipOnly = allIT.filter(t => !allDT.includes(t));
+        let tly = ry + 16;
+        allDT.forEach(t => {
+          g.fillStyle = GREEN; g.font = `bold 12px ${MONO2}`; g.textAlign = "center";
+          g.fillText(t, typeColMid, tly); tly += 16;
+        });
+        ipOnly.forEach(t => {
+          g.fillStyle = YELLOW; g.font = `bold 12px ${MONO2}`; g.textAlign = "center";
+          g.fillText(t, typeColMid, tly); tly += 16;
+        });
+      }
+
+      // Separator line before tower numbers
+      const twY = ry + BAND_H;
+      g.strokeStyle="#ddd"; g.lineWidth=0.5;
+      g.beginPath(); g.moveTo(PAD+4, twY); g.lineTo(PAD+CELL_W-4, twY); g.stroke();
+
+      // Done tower numbers — green
+      let dlY = twY + LINE_H;
+      row.dLines.forEach(ln => {
+        g.fillStyle=GREEN; g.font=`bold 13px ${MONO2}`; g.textAlign="left";
+        g.save(); g.beginPath(); g.rect(xDONE+2, ry, C_DONE-4, rh); g.clip();
+        g.fillText(ln, xDONE+6, dlY); g.restore();
+        dlY += LINE_H;
+      });
+
+      // IP tower numbers — yellow
+      let ilY = twY + LINE_H;
+      row.iLines.forEach(ln => {
+        g.fillStyle=YELLOW; g.font=`bold 13px ${MONO2}`; g.textAlign="left";
+        g.save(); g.beginPath(); g.rect(xIP+2, ry, C_IP-4, rh); g.clip();
+        g.fillText(ln, xIP+6, ilY); g.restore();
+        ilY += LINE_H;
+      });
+
+      // Plan tower numbers — blue
+      let plY = twY + LINE_H;
+      (row.pLines||[]).forEach(ln => {
+        g.fillStyle=PLAN_CLR; g.font=`bold 13px ${MONO2}`; g.textAlign="left";
+        g.save(); g.beginPath(); g.rect(xPLAN+2, ry, C_PLAN-4, rh); g.clip();
+        g.fillText(ln, xPLAN+6, plY); g.restore();
+        plY += LINE_H;
+      });
+
+      if (row.remark) {
+        const remChars=Math.floor(C_REM/6.5);let rlines=[],rcur="";
+        row.remark.split(" ").forEach(w=>{if((rcur+" "+w).trim().length>remChars&&rcur){rlines.push(rcur.trim());rcur=w;}else rcur+=(rcur?" ":"")+w;});
+        if(rcur)rlines.push(rcur.trim());
+        let rly=twY+LINE_H;
+        rlines.forEach(rl=>{g.fillStyle=REM_CLR;g.font=`bold 11px ${MONO2}`;g.textAlign="left";g.save();g.beginPath();g.rect(xREM+2,ry,C_REM-4,rh);g.clip();g.fillText(rl,xREM+6,rly);g.restore();rly+=LINE_H;});
+      }
+      ry += rh + 1;
+    });
+
+    // Table outer border
+    g.strokeStyle=BORDER; g.lineWidth=1;
+    g.strokeRect(PAD, tY, CELL_W, ry-tY);
+
+    // Footer
+    g.fillStyle="#555"; g.font=`bold 12px ${SANS}`; g.textAlign="center";
+    g.fillText("Prepared by: Murshid (Asst. Mgr – Electrical)  ·  MEW/C/5991-2023/2024  ·  L&T Construction", W/2, ry+32);
+
+    cv.toBlob(b => {
+      const url=URL.createObjectURL(b);
+      Object.assign(document.createElement("a"),{href:url,download:`DPR-${date}.png`}).click();
+      URL.revokeObjectURL(url);
+    });
+    flash("🖼️ PNG downloaded!");
+  }
+
+  if (!daily || !cumulative) return (
+    <div style={{background:"#f5f6fa",height:"100vh",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:12}}>
+      <div style={{color:AMBER,fontFamily:mono,fontSize:16,fontWeight:700}}>Loading {date}…</div>
+      <div style={{color:MUTED,fontSize:11}}>Connecting to Firebase…</div>
+    </div>
+  );
+
+  return (
+    <div style={{background:"#f5f6fa",minHeight:"100vh",fontFamily:"'Segoe UI',system-ui,sans-serif",color:TEXT}}>
+
+      {toast && (
+        <div style={{position:"fixed",top:14,right:14,background:AMBER,color:"#fff",
+          padding:"9px 16px",borderRadius:8,fontWeight:700,fontSize:12,zIndex:999}}>
+          {toast}
+        </div>
+      )}
+
+      {/* Header */}
+      <div style={{background:AMBER,padding:"10px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
+        <div>
+          <div style={{fontFamily:mono,fontWeight:700,fontSize:15,color:"#000"}}>MEW-5991 · DPR</div>
+          <div style={{fontSize:10,color:"#444",display:"flex",gap:6,alignItems:"center"}}>
+            400kV OHL Kuwait · L&T Construction
+            <span style={{
+              background: fbStatus==="synced"?"#0a2410":fbStatus==="error"?"#2a0a0a":"#1a1a00",
+              color: fbStatus==="synced"?"#3fb950":fbStatus==="error"?"#f85149":"#f0c040",
+              border: `1px solid ${fbStatus==="synced"?"#155a25":fbStatus==="error"?"#5a1515":"#6b4f00"}`,
+              borderRadius:4, padding:"1px 6px", fontSize:9, fontWeight:700
+            }}>
+              {fbStatus==="synced"?"☁ Synced":fbStatus==="error"?"✗ Offline":"⟳ Connecting"}
+            </span>
+          </div>
+        </div>
+        <div style={{display:"flex",gap:7,flexWrap:"wrap",alignItems:"center"}}>
+          <input type="date" value={date} onChange={e=>setDate(e.target.value)}
+            style={{background:"#fff",border:"1px solid #ddd",color:"#333",fontFamily:mono,fontSize:12,padding:"5px 8px",borderRadius:5}}/>
+          <select value={weather} onChange={e=>setWeather(e.target.value)}
+            style={{background:"#fff",border:"1px solid #ddd",color:TEXT,fontSize:12,padding:"5px 8px",borderRadius:5}}>
+            {["Sunny","Partly Cloudy","Cloudy","Windy","Sandstorm"].map(w=><option key={w}>{w}</option>)}
+          </select>
+          <input value={temp} onChange={e=>setTemp(e.target.value)}
+            style={{background:"#000",border:"none",color:TEXT,fontFamily:mono,fontSize:12,padding:"5px 8px",borderRadius:5,width:96}}/>
+          <button onClick={downloadExcel}
+            style={{background:"#1a3a5c",color:"#fff",border:"none",borderRadius:5,padding:"6px 12px",cursor:"pointer",fontSize:12,fontWeight:600}}>
+            ⬇ Excel
+          </button>
+          <button onClick={downloadPNG}
+            style={{background:"#fff",color:AMBER,border:`1px solid ${AMBER}`,borderRadius:5,padding:"6px 12px",cursor:"pointer",fontSize:12,fontWeight:600}}>
+            🖼 PNG
+          </button>
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div style={{background:"#eef0f7",padding:"7px 18px",borderBottom:`1px solid ${BORDER}`,display:"flex",gap:18,flexWrap:"wrap",alignItems:"center"}}>
+        <span style={{fontSize:10,color:"#6070a0",fontWeight:600,letterSpacing:1}}>CHIP STATUS:</span>
+        <div style={{display:"flex",gap:5,alignItems:"center"}}>
+          <span style={{background:"#fff8ec",color:"#b06000",border:`1.5px solid #e09030`,borderRadius:5,padding:"3px 9px",fontSize:11,fontFamily:mono,fontWeight:700}}>▶ 8/1</span>
+          <span style={{fontSize:10,color:YELLOW}}>In Progress</span>
+        </div>
+        <div style={{display:"flex",gap:5,alignItems:"center"}}>
+          <span style={{background:"#eafaf0",color:"#1a7a35",border:`1.5px solid #3fb950`,borderRadius:5,padding:"3px 9px",fontSize:11,fontFamily:mono,fontWeight:700}}>✓ 8/1</span>
+          <span style={{fontSize:10,color:GREEN}}>Completed</span>
+        </div>
+        <span style={{fontSize:10,color:MUTED}}>· Tap chip to toggle · ✕ to remove · Pre-seeded data in Excel only</span>
+      </div>
+
+      {/* Main Tabs: DPR | Plan */}
+      <div style={{display:"flex",background:"#eef0f7",borderBottom:`1px solid ${BORDER}`}}>
+        {[["dpr","📋 DPR"],["plan","📅 Plan"],["admin","🔧 Admin"]].map(([key,lbl])=>(
+          <button key={key} onClick={()=>setMainTab(key)}
+            style={{padding:"10px 20px",background:"none",border:"none",cursor:"pointer",
+              fontSize:13,fontWeight:mainTab===key?700:400,
+              color:mainTab===key?AMBER:"#6070a0",
+              borderBottom:mainTab===key?`2px solid ${AMBER}`:"2px solid transparent",marginBottom:-1}}>
+            {lbl}
+          </button>
+        ))}
+      </div>
+
+      {/* Item Sub-Tabs */}
+      <div style={{display:"flex",background:CARD,borderBottom:`1px solid ${BORDER}`}}>
+        {[["item1","Item 1 – Khiran → Wafra 'Z'  (128)"],["item2","Item 2 – Wafra 'Z' → Sulaibiya 'Z'  (229)"]].map(([key,lbl])=>(
+          <button key={key} onClick={()=>setTab(key)}
+            style={{padding:"10px 16px",background:"none",border:"none",cursor:"pointer",
+              fontSize:13,fontWeight:tab===key?700:400,
+              color:tab===key?AMBER:"#6070a0",
+              borderBottom:tab===key?`2px solid ${AMBER}`:"2px solid transparent",marginBottom:-1}}>
+            {lbl}
+          </button>
+        ))}
+      </div>
+
+      {/* Activity rows — DPR mode */}
+      {mainTab==="dpr" && ACTS.map((act,ai)=>{
+        const total=getTowers(tab).length;
+        const done=countDone(tab,act.key,daily,cumulative);
+        const cumIp = cumulative ? new Set([...(cumulative[tab][act.key]?.ip||[]),...(daily[tab][act.key]?.ip||[])]).size : daily[tab][act.key].ip.length;
+        const ip=cumIp;
+        const pct=(done/total*100).toFixed(1);
+        const ik=`${tab}_${act.key}`;
+        const todayChips=chips(tab,act.key);
+
+        return (
+          <div key={act.key} style={{borderBottom:`1px solid ${BORDER}`,background:ai%2===0?CARD:"#f8f9fc"}}>
+            <div style={{padding:"12px 18px"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10,flexWrap:"wrap",gap:8}}>
+                <div>
+                  <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+                    <span style={{fontSize:13,fontWeight:700}}>{act.name}</span>
+                    <button onClick={()=>{setRemarkOpen(ik);setRemarkDraft(remarks[ik]||"");}}
+                      style={{background:"none",border:"none",cursor:"pointer",fontSize:14,
+                        padding:"0 2px",opacity:remarks[ik]?1:0.3,lineHeight:1}}>💬</button>
+                  </div>
+                  <div style={{display:"flex",gap:12,alignItems:"center"}}>
+                    <span style={{fontSize:11,color:GREEN}}>✓ {done} done</span>
+                    {ip>0&&<span style={{fontSize:11,color:YELLOW}}>▶ {ip} in progress</span>}
+                    <span style={{fontSize:11,color:MUTED}}>{total-done-ip} remaining</span>
+                    <span style={{fontSize:12,fontWeight:700,color:pct>=90?GREEN:pct>=50?AMBER:MUTED}}>{pct}%</span>
+                  </div>
+                </div>
+                <div style={{width:140,background:"#e0e4ee",borderRadius:4,height:7,overflow:"hidden",display:"flex",alignSelf:"center"}}>
+                  <div style={{width:`${done/total*100}%`,background:pct>=90?GREEN:pct>=50?AMBER:NAVY,transition:"width .3s"}}/>
+                  <div style={{width:`${ip/total*100}%`,background:YELLOW,transition:"width .3s"}}/>
+                </div>
+              </div>
+
+              {/* ── Yesterday's plan as DPR quick-add suggestions ── */}
+              {(()=>{
+                if (!prevPlan) return null;
+                const yPlan = (prevPlan[tab]?.[act.key] || []).filter(loc => {
+                  const alreadyDone = (cumulative?.[tab]?.[act.key]?.done||BG_DONE[tab][act.key]||[]).includes(loc);
+                  const todayAdded = daily[tab][act.key]?.done?.includes(loc) || daily[tab][act.key]?.ip?.includes(loc);
+                  return !alreadyDone && !todayAdded;
+                });
+                if (!yPlan.length) return null;
+                return (
+                  <div style={{marginBottom:10}}>
+                    <div style={{fontSize:10,color:"#1a5ab0",fontWeight:700,letterSpacing:1,marginBottom:5}}>
+                      📅 FROM YESTERDAY'S PLAN — TAP TO ADD:
+                    </div>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+                      {yPlan.map(loc=>(
+                        <div key={loc} style={{display:"inline-flex",gap:3}}>
+                          <button onClick={()=>addChips(tab,act.key,IP,"dpr",loc)}
+                            style={{background:"#2e2200",color:"#f0c040",border:"1.5px solid #6b4f00",
+                              borderRadius:"6px 0 0 6px",padding:"5px 9px",cursor:"pointer",fontFamily:mono,
+                              fontSize:11,fontWeight:700}}>
+                            ▶ {loc}
+                          </button>
+                          <button onClick={()=>addChips(tab,act.key,DONE,"dpr",loc)}
+                            style={{background:"#0a2410",color:"#3fb950",border:"1.5px solid #155a25",
+                              borderRadius:"0 6px 6px 0",padding:"5px 7px",cursor:"pointer",fontFamily:mono,
+                              fontSize:11,fontWeight:700,borderLeft:"none"}}>
+                            ✓
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+              <div style={{display:"flex",gap:6,marginBottom:todayChips.length?10:0}}>
+                <input
+                  ref={el=>refs.current[ik]=el}
+                  value={inputs[ik]||""}
+                  onChange={e=>setInputs(q=>({...q,[ik]:e.target.value}))}
+                  onKeyDown={e=>e.key==="Enter"&&addChips(tab,act.key,IP)}
+                  placeholder={`Type tower no. to check status or add  e.g. 7/5`}
+                  style={{flex:1,background:"#181818",border:`1px solid ${errors[ik]?"#f85149":BORDER}`,
+                    color:TEXT,fontFamily:mono,fontSize:12,padding:"7px 10px",borderRadius:6,outline:"none",boxShadow:"inset 0 1px 3px rgba(0,0,0,0.07)"}}
+                />
+                <button onClick={()=>addChips(tab,act.key,IP)} title="Add as In Progress"
+                  style={{background:"#2e2200",color:YELLOW,border:`1px solid #6b4f00`,borderRadius:6,padding:"7px 13px",cursor:"pointer",fontWeight:700,fontSize:12}}>
+                  ▶ Add
+                </button>
+                <button onClick={()=>addChips(tab,act.key,DONE)} title="Add as Completed"
+                  style={{background:"#0a2410",color:GREEN,border:`1px solid #155a25`,borderRadius:6,padding:"7px 13px",cursor:"pointer",fontWeight:700,fontSize:12}}>
+                  ✓ Done
+                </button>
+              </div>
+
+              {errors[ik]&&<div style={{color:"#f85149",fontSize:10,marginBottom:6,fontFamily:mono}}>{errors[ik]}</div>}
+
+              {(()=>{
+                const raw=(inputs[ik]||"").trim();
+                if(!raw||errors[ik]) return null;
+                const tokens=raw.split(/[,\s;]+/).map(s=>s.trim()).filter(Boolean);
+                const vs=new Set(getTowers(tab));
+                const hints=tokens.map(t=>{
+                  if(!vs.has(t)) return null;
+                  const cumDone=(cumulative?[...(cumulative[tab][act.key]?.done||[])]:BG_DONE[tab][act.key]||[]).includes(t);
+                  const dyDone=daily[tab][act.key].done.includes(t);
+                  const dyIP=daily[tab][act.key].ip.includes(t);
+                  if(cumDone||dyDone) return {t,label:"✓ Done",color:"#1a7a35",bg:"#eafaf0",border:"#3fb950",canDelete:dyDone&&!cumDone};
+                  if(dyIP)           return {t,label:"▶ In Progress",color:"#b06000",bg:"#fff8ec",border:"#e09030",canDelete:true};
+                  return               {t,label:"○ Yet to Start",color:"#9098b0",bg:"#f5f6fa",border:"#c8d0e0",canDelete:false};
+                }).filter(Boolean);
+                if(!hints.length) return null;
+                return (
+                  <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:8,marginTop:-4}}>
+                    {hints.map(h=>(
+                      <span key={h.t} style={{
+                        background:h.bg,color:h.color,border:`1px solid ${h.border}`,
+                        borderRadius:5,padding:"3px 9px",fontSize:11,fontFamily:mono,fontWeight:700,
+                        display:"inline-flex",alignItems:"center",gap:7
+                      }}>
+                        {h.t} — {h.label}
+                        {h.canDelete&&(
+                          <button onClick={()=>remove(tab,act.key,h.t)} style={{
+                            background:"#fff0f0",color:"#cc2222",border:"1px solid #ffaaaa",
+                            borderRadius:4,padding:"1px 6px",cursor:"pointer",fontSize:10,fontWeight:700,
+                            fontFamily:mono,lineHeight:1.4
+                          }}>✕ Delete</button>
+                        )}
+                        {!h.canDelete&&(h.label==="✓ Done")&&(
+                          <span style={{fontSize:9,color:"#555",fontWeight:400}}>(pre-seeded)</span>
+                        )}
+                      </span>
+                    ))}
+                  </div>
+                );
+              })()}
+
+              {todayChips.length>0&&(
+                <div style={{display:"flex",flexWrap:"wrap",marginTop:2}}>
+                  {todayChips.map(loc=>(
+                    <Chip key={loc} loc={loc} status={chipStatus(tab,act.key,loc)}
+                      onToggle={()=>toggle(tab,act.key,loc)}
+                      onRemove={()=>remove(tab,act.key,loc)}/>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })}
+
+      {/* Plan rows */}
+      {mainTab==="plan" && ACTS.map((act,ai)=>{
+        const planChips = chips(tab,act.key,"plan");
+        const ik=`${tab}_${act.key}`;
+        return (
+          <div key={act.key} style={{borderBottom:`1px solid ${BORDER}`,background:ai%2===0?CARD:"#f8f9fc"}}>
+            <div style={{padding:"12px 18px"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                <div style={{fontSize:13,fontWeight:700}}>{act.name}</div>
+                <span style={{fontSize:11,color:"#7eb8f7"}}>📅 {planChips.length} planned</span>
+              </div>
+              {/* ── Today's IP towers as quick-add suggestions ── */}
+              {(()=>{
+                const todayIP = (daily[tab][act.key]?.ip||[]).filter(loc=>!planChips.includes(loc));
+                if (!todayIP.length) return null;
+                return (
+                  <div style={{marginBottom:10}}>
+                    <div style={{fontSize:10,color:"#b06000",fontWeight:700,letterSpacing:1,marginBottom:5}}>
+                      ▶ IN PROGRESS TODAY — TAP TO ADD TO PLAN:
+                    </div>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+                      {todayIP.map(loc=>(
+                        <button key={loc} onClick={()=>addChips(tab,act.key,PLAN,"plan",loc)}
+                          style={{background:"#fff8ec",color:"#b06000",border:"1.5px solid #e09030",
+                            borderRadius:6,padding:"5px 10px",cursor:"pointer",fontFamily:mono,
+                            fontSize:11,fontWeight:700,transition:"all 0.1s"}}>
+                          ▶ {loc}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+              <div style={{display:"flex",gap:6,marginBottom:planChips.length?10:0}}>
+                <input
+                  ref={el=>refs.current[ik]=el}
+                  value={inputs[ik]||""}
+                  onChange={e=>setInputs(q=>({...q,[ik]:e.target.value}))}
+                  onKeyDown={e=>{if(e.key==="Enter") addChips(tab,act.key,PLAN,"plan");}}
+                  placeholder={`Type tower nos to plan  e.g. 7/5, 7/6`}
+                  style={{flex:1,background:"#181818",border:`1px solid ${errors[ik]?"#cc2222":"#b0b8d0"}`,
+                    color:TEXT,fontFamily:mono,fontSize:12,padding:"7px 10px",borderRadius:6,outline:"none",boxShadow:"inset 0 1px 3px rgba(0,0,0,0.07)"}}
+                />
+                <button onClick={()=>addChips(tab,act.key,PLAN,"plan")}
+                  style={{background:"#eaf2ff",color:"#1a5ab0",border:`1px solid #6090d0`,borderRadius:6,padding:"7px 13px",cursor:"pointer",fontWeight:700,fontSize:12}}>
+                  + Plan
+                </button>
+              </div>
+              {errors[ik]&&<div style={{color:"#f85149",fontSize:10,marginBottom:6,fontFamily:mono}}>{errors[ik]}</div>}
+              {planChips.length>0&&(
+                <div style={{display:"flex",flexWrap:"wrap",marginTop:2}}>
+                  {planChips.map(loc=>(
+                    <div key={loc} style={{position:"relative",display:"inline-flex",margin:"3px"}}>
+                      <span style={{background:"#eaf2ff",color:"#1a5ab0",border:"1.5px solid #6090d0",
+                        borderRadius:7,padding:"6px 10px",fontFamily:mono,fontSize:12,fontWeight:700}}>
+                        📅 {loc}
+                      </span>
+                      <button onClick={()=>remove(tab,act.key,loc,"plan")} style={{
+                        position:"absolute",top:-6,right:-6,width:16,height:16,borderRadius:"50%",
+                        background:"#e8eaf0",border:"1px solid #c0c8d8",color:"#777",fontSize:9,cursor:"pointer",
+                        display:"flex",alignItems:"center",justifyContent:"center",padding:0,lineHeight:1}}>✕</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })}
+
+      <div style={{height:40}}/>
+
+      {/* ── ADMIN PANEL ── */}
+      {mainTab==="admin" && (
+        <div style={{padding:20,maxWidth:600,margin:"0 auto"}}>
+          {!adminUnlocked ? (
+            <div style={{background:CARD,borderRadius:12,padding:28,border:`1px solid ${BORDER}`,marginTop:20,textAlign:"center"}}>
+              <div style={{fontSize:20,fontWeight:700,color:TEXT,marginBottom:6}}>🔧 Admin Panel</div>
+              <div style={{fontSize:12,color:MUTED,marginBottom:20}}>Password required to manage master tower list</div>
+              <div style={{display:"flex",gap:8,justifyContent:"center"}}>
+                <input type="password" value={adminPass}
+                  onChange={e=>{setAdminPass(e.target.value);setAdminPassErr(false);}}
+                  onKeyDown={e=>{if(e.key==="Enter"){if(adminPass==="@Qwe456uio"){setAdminUnlocked(true);}else{setAdminPassErr(true);}}}}
+                  placeholder="Enter password"
+                  style={{padding:"8px 14px",borderRadius:6,border:`1.5px solid ${adminPassErr?"#cc2222":BORDER}`,fontSize:14,width:200,outline:"none"}}/>
+                <button onClick={()=>{if(adminPass==="@Qwe456uio"){setAdminUnlocked(true);}else{setAdminPassErr(true);}}}
+                  style={{background:AMBER,color:"#fff",border:"none",borderRadius:6,padding:"8px 18px",cursor:"pointer",fontWeight:700,fontSize:14}}>
+                  Unlock
+                </button>
+              </div>
+              {adminPassErr&&<div style={{color:"#cc2222",fontSize:12,marginTop:8}}>Incorrect password</div>}
+            </div>
+          ) : (
+            <div>
+              {/* Item selector */}
+              <div style={{display:"flex",gap:8,marginBottom:20,marginTop:10}}>
+                {["item1","item2"].map(it=>(
+                  <button key={it} onClick={()=>{setAdminItem(it);setAdminAfter("");}}
+                    style={{padding:"8px 20px",borderRadius:6,border:`2px solid ${adminItem===it?AMBER:BORDER}`,
+                      background:adminItem===it?"#fff8ec":CARD,color:adminItem===it?AMBER:TEXT,
+                      fontWeight:700,fontSize:13,cursor:"pointer"}}>
+                    {it==="item1"?"Item 1":"Item 2"}
+                  </button>
+                ))}
+                <button onClick={()=>setAdminUnlocked(false)}
+                  style={{marginLeft:"auto",padding:"8px 14px",borderRadius:6,border:`1px solid ${BORDER}`,
+                    background:CARD,color:MUTED,fontSize:12,cursor:"pointer"}}>
+                  🔒 Lock
+                </button>
+              </div>
+
+              {/* Current tower count */}
+              {(()=>{
+                const towers = masterTowers?.[adminItem]
+                  ? masterTowers[adminItem]
+                  : ALL_TOWERS[adminItem].map(loc=>({loc,type:(TOWER_TYPE[adminItem]||{})[loc]||"–"}));
+                return (
+                  <div style={{background:"#eef0f7",borderRadius:8,padding:"10px 16px",marginBottom:20,fontSize:13,color:TEXT}}>
+                    <b>{adminItem==="item1"?"Item 1":"Item 2"}</b> — <b>{towers.length}</b> towers in master list
+                    {masterTowers?.[adminItem] ? <span style={{color:"#1a7a35",fontSize:11,marginLeft:8}}>☁ From Firebase</span>
+                      : <span style={{color:MUTED,fontSize:11,marginLeft:8}}>Using hardcoded default</span>}
+                  </div>
+                );
+              })()}
+
+              {/* ADD NEW TOWER */}
+              <div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:10,padding:20,marginBottom:16}}>
+                <div style={{fontWeight:700,fontSize:14,color:TEXT,marginBottom:14}}>➕ Add New Tower</div>
+                <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                  <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                    <div style={{flex:1,minWidth:140}}>
+                      <div style={{fontSize:11,color:MUTED,marginBottom:4,fontWeight:600}}>INSERT AFTER</div>
+                      <select value={adminAfter} onChange={e=>setAdminAfter(e.target.value)}
+                        style={{width:"100%",padding:"7px 10px",borderRadius:6,border:`1px solid ${BORDER}`,fontSize:13,background:CARD,color:TEXT}}>
+                        <option value="">— At the end —</option>
+                        {(masterTowers?.[adminItem]
+                          ? masterTowers[adminItem].map(t=>t.loc)
+                          : ALL_TOWERS[adminItem]
+                        ).map(loc=>(
+                          <option key={loc} value={loc}>{loc}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div style={{flex:1,minWidth:120}}>
+                      <div style={{fontSize:11,color:MUTED,marginBottom:4,fontWeight:600}}>LOCATION NO.</div>
+                      <input value={adminLoc} onChange={e=>setAdminLoc(e.target.value.trim())}
+                        placeholder="e.g. 7/30"
+                        style={{width:"100%",padding:"7px 10px",borderRadius:6,border:`1px solid ${BORDER}`,fontSize:13,color:TEXT}}/>
+                    </div>
+                    <div style={{flex:1,minWidth:120}}>
+                      <div style={{fontSize:11,color:MUTED,marginBottom:4,fontWeight:600}}>TOWER TYPE</div>
+                      <input value={adminType} onChange={e=>setAdminType(e.target.value.trim())}
+                        placeholder="e.g. D2+0"
+                        style={{width:"100%",padding:"7px 10px",borderRadius:6,border:`1px solid ${BORDER}`,fontSize:13,color:TEXT}}/>
+                    </div>
+                  </div>
+                  <button onClick={async()=>{
+                    if(!adminLoc||!adminType){setAdminMsg("❌ Fill location and tower type");return;}
+                    const base = masterTowers?.[adminItem]
+                      ? [...masterTowers[adminItem]]
+                      : ALL_TOWERS[adminItem].map(loc=>({loc,type:(TOWER_TYPE[adminItem]||{})[loc]||"–"}));
+                    if(base.find(t=>t.loc===adminLoc)){setAdminMsg("❌ Tower already exists");return;}
+                    const newEntry={loc:adminLoc,type:adminType};
+                    let updated;
+                    if(!adminAfter){
+                      updated=[...base,newEntry];
+                    } else {
+                      const idx=base.findIndex(t=>t.loc===adminAfter);
+                      updated=[...base.slice(0,idx+1),newEntry,...base.slice(idx+1)];
+                    }
+                    const newMaster={...( masterTowers||{item1:ALL_TOWERS.item1.map(l=>({loc:l,type:(TOWER_TYPE.item1||{})[l]||"–"})),item2:ALL_TOWERS.item2.map(l=>({loc:l,type:(TOWER_TYPE.item2||{})[l]||"–"}))} ),[adminItem]:updated};
+                    setMasterTowers(newMaster);
+                    await fbSaveMaster(newMaster);
+                    setAdminLoc(""); setAdminType(""); setAdminAfter("");
+                    setAdminMsg("✅ Tower "+adminLoc+" added after "+(adminAfter||"end"));
+                    setTimeout(()=>setAdminMsg(""),3000);
+                  }} style={{background:GREEN,color:"#fff",border:"none",borderRadius:6,padding:"9px 20px",cursor:"pointer",fontWeight:700,fontSize:13,alignSelf:"flex-start"}}>
+                    Add Tower
+                  </button>
+                </div>
+              </div>
+
+              {/* EDIT TOWER TYPE */}
+              <div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:10,padding:20,marginBottom:16}}>
+                <div style={{fontWeight:700,fontSize:14,color:TEXT,marginBottom:14}}>✏️ Edit Tower Type</div>
+                <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"flex-end"}}>
+                  <div style={{flex:1,minWidth:120}}>
+                    <div style={{fontSize:11,color:MUTED,marginBottom:4,fontWeight:600}}>SELECT TOWER</div>
+                    <select value={adminEditLoc} onChange={e=>{
+                      setAdminEditLoc(e.target.value);
+                      const towers = masterTowers?.[adminItem]
+                        ? masterTowers[adminItem]
+                        : ALL_TOWERS[adminItem].map(l=>({loc:l,type:(TOWER_TYPE[adminItem]||{})[l]||"–"}));
+                      const t=towers.find(t=>t.loc===e.target.value);
+                      if(t) setAdminEditType(t.type);
+                    }} style={{width:"100%",padding:"7px 10px",borderRadius:6,border:`1px solid ${BORDER}`,fontSize:13,background:CARD,color:TEXT}}>
+                      <option value="">— Select tower —</option>
+                      {(masterTowers?.[adminItem]
+                        ? masterTowers[adminItem].map(t=>t.loc)
+                        : ALL_TOWERS[adminItem]
+                      ).map(loc=>(
+                        <option key={loc} value={loc}>{loc}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div style={{flex:1,minWidth:120}}>
+                    <div style={{fontSize:11,color:MUTED,marginBottom:4,fontWeight:600}}>NEW TYPE</div>
+                    <input value={adminEditType} onChange={e=>setAdminEditType(e.target.value.trim())}
+                      placeholder="e.g. D10+6"
+                      style={{width:"100%",padding:"7px 10px",borderRadius:6,border:`1px solid ${BORDER}`,fontSize:13,color:TEXT}}/>
+                  </div>
+                  <button onClick={async()=>{
+                    if(!adminEditLoc||!adminEditType){setAdminMsg("❌ Select tower and enter new type");return;}
+                    const base = masterTowers?.[adminItem]
+                      ? [...masterTowers[adminItem]]
+                      : ALL_TOWERS[adminItem].map(l=>({loc:l,type:(TOWER_TYPE[adminItem]||{})[l]||"–"}));
+                    const updated=base.map(t=>t.loc===adminEditLoc?{...t,type:adminEditType}:t);
+                    const newMaster={...(masterTowers||{item1:ALL_TOWERS.item1.map(l=>({loc:l,type:(TOWER_TYPE.item1||{})[l]||"–"})),item2:ALL_TOWERS.item2.map(l=>({loc:l,type:(TOWER_TYPE.item2||{})[l]||"–"}))}),[adminItem]:updated};
+                    setMasterTowers(newMaster);
+                    await fbSaveMaster(newMaster);
+                    setAdminMsg("✅ "+adminEditLoc+" type updated to "+adminEditType);
+                    setAdminEditLoc(""); setAdminEditType("");
+                    setTimeout(()=>setAdminMsg(""),3000);
+                  }} style={{background:AMBER,color:"#fff",border:"none",borderRadius:6,padding:"9px 20px",cursor:"pointer",fontWeight:700,fontSize:13}}>
+                    Update
+                  </button>
+                </div>
+              </div>
+
+              {/* REMOVE TOWER */}
+              <div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:10,padding:20,marginBottom:16}}>
+                <div style={{fontWeight:700,fontSize:14,color:TEXT,marginBottom:14}}>🗑️ Remove Tower</div>
+                <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"flex-end"}}>
+                  <div style={{flex:1,minWidth:160}}>
+                    <div style={{fontSize:11,color:MUTED,marginBottom:4,fontWeight:600}}>SELECT TOWER TO REMOVE</div>
+                    <select value={adminEditLoc} onChange={e=>setAdminEditLoc(e.target.value)}
+                      style={{width:"100%",padding:"7px 10px",borderRadius:6,border:`1px solid ${BORDER}`,fontSize:13,background:CARD,color:TEXT}}>
+                      <option value="">— Select tower —</option>
+                      {(masterTowers?.[adminItem]
+                        ? masterTowers[adminItem].map(t=>t.loc)
+                        : ALL_TOWERS[adminItem]
+                      ).map(loc=>(
+                        <option key={loc} value={loc}>{loc}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <button onClick={async()=>{
+                    if(!adminEditLoc){setAdminMsg("❌ Select a tower to remove");return;}
+                    if(!window.confirm("Remove tower "+adminEditLoc+" from master list?")) return;
+                    const base = masterTowers?.[adminItem]
+                      ? [...masterTowers[adminItem]]
+                      : ALL_TOWERS[adminItem].map(l=>({loc:l,type:(TOWER_TYPE[adminItem]||{})[l]||"–"}));
+                    const updated=base.filter(t=>t.loc!==adminEditLoc);
+                    const newMaster={...(masterTowers||{item1:ALL_TOWERS.item1.map(l=>({loc:l,type:(TOWER_TYPE.item1||{})[l]||"–"})),item2:ALL_TOWERS.item2.map(l=>({loc:l,type:(TOWER_TYPE.item2||{})[l]||"–"}))}),[adminItem]:updated};
+                    setMasterTowers(newMaster);
+                    await fbSaveMaster(newMaster);
+                    setAdminMsg("✅ Tower "+adminEditLoc+" removed");
+                    setAdminEditLoc("");
+                    setTimeout(()=>setAdminMsg(""),3000);
+                  }} style={{background:"#cc2222",color:"#fff",border:"none",borderRadius:6,padding:"9px 20px",cursor:"pointer",fontWeight:700,fontSize:13}}>
+                    Remove
+                  </button>
+                </div>
+              </div>
+
+              {adminMsg&&(
+                <div style={{padding:"10px 16px",borderRadius:8,background:adminMsg.startsWith("✅")?"#eafaf0":"#fff0f0",
+                  color:adminMsg.startsWith("✅")?"#1a7a35":"#cc2222",border:`1px solid ${adminMsg.startsWith("✅")?"#3fb950":"#ffaaaa"}`,
+                  fontWeight:600,fontSize:13}}>
+                  {adminMsg}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div style={{height:40}}/>
+
+      {remarkOpen&&(
+        <div onClick={e=>{if(e.target===e.currentTarget)setRemarkOpen(null);}}
+          style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",zIndex:9999,display:"flex",alignItems:"flex-end"}}>
+          <div style={{background:CARD,width:"100%",borderRadius:"14px 14px 0 0",padding:20}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+              <b style={{fontSize:15,color:TEXT}}>💬 Remarks</b>
+              <button onClick={()=>setRemarkOpen(null)} style={{background:"none",border:"none",fontSize:22,cursor:"pointer",color:MUTED}}>✕</button>
+            </div>
+            <div style={{fontSize:11,color:MUTED,marginBottom:10}}>
+              {ACTS.find(a=>`${tab}_${a.key}`===remarkOpen)?.name} · {tab==="item1"?"Item 1":"Item 2"}
+            </div>
+            <textarea value={remarkDraft} onChange={e=>setRemarkDraft(e.target.value)}
+              placeholder="Type your remarks here..." rows={4} autoFocus
+              style={{width:"100%",padding:"10px 12px",borderRadius:8,border:`1.5px solid ${BORDER}`,
+                fontSize:13,color:TEXT,resize:"none",outline:"none",background:"#f8f9fc",
+                fontFamily:"'Segoe UI',system-ui,sans-serif"}}/>
+            <div style={{display:"flex",gap:8,marginTop:12}}>
+              <button onClick={()=>{
+                const n={...remarks};
+                if(remarkDraft.trim()) n[remarkOpen]=remarkDraft.trim(); else delete n[remarkOpen];
+                persistRemarks(n); setRemarkOpen(null);
+              }} style={{flex:1,background:AMBER,color:"#fff",border:"none",borderRadius:8,padding:10,cursor:"pointer",fontWeight:700,fontSize:14}}>Save</button>
+              {remarks[remarkOpen]&&(
+                <button onClick={()=>{const n={...remarks};delete n[remarkOpen];persistRemarks(n);setRemarkOpen(null);}}
+                  style={{background:"#fff0f0",color:"#cc2222",border:"1px solid #ffaaaa",borderRadius:8,padding:"10px 14px",cursor:"pointer",fontWeight:700,fontSize:13}}>Clear</button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
